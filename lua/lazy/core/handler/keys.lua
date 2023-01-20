@@ -27,18 +27,11 @@ function M.replace_special(feed)
   return feed
 end
 
----@private
----@param key string
----@return string
-local t = function(key)
-  return vim.api.nvim_replace_termcodes(key, true, true, true)
-end
-
 function M.retrigger(keys)
   local mode = vim.api.nvim_get_mode().mode
 
   if mode:find("o") then
-    return "<Esc>" .. (vim.o.opfunc ~= "" and "g@" or vim.v.operator) .. keys
+    return "<Esc>" .. vim.v.operator .. keys
   end
 
   return "<Ignore>" .. keys
