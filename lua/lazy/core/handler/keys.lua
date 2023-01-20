@@ -27,27 +27,31 @@ function M.replace_special(feed)
   return feed
 end
 
+---@private
+---@param key string
+---@return string
+local t = function(key)
+  return vim.api.nvim_replace_termcodes(key, true, true, true)
+end
+
 function M.retrigger(keys)
-  local pending = ""
-  while true do
-    ---@type number|string
-    local c = vim.fn.getchar(0)
-    if c == 0 then
-      break
-    end
-    c = type(c) == "number" and vim.fn.nr2char(c) or c
-    pending = pending .. c
+  local mode = vim.api.nvim_get_mode().mode
+
+  -- not sure why we have to reselect visually
+  local visual = {
+    t("v"),
+    t("V"),
+    t("<c-v>"),
+  }
+  if vim.tbl_contains(visual, mode) then
+    return "<esc>gv" .. keys
   end
-  local op = vim.v.operator
-  if op and op ~= "" and vim.api.nvim_get_mode().mode:find("o") then
-    keys = "<esc>" .. op .. keys
+
+  if mode:find("o") then
+    return "<esc>" .. (vim.o.opfunc ~= "" and "g@" or vim.v.operator) .. keys
   end
-  local feed = keys .. pending
-  feed = M.replace_special(feed)
-  if vim.v.count ~= 0 then
-    feed = vim.v.count .. feed
-  end
-  vim.api.nvim_input(feed)
+
+  return "<esc>" .. keys
 end
 
 ---@param value string|LazyKeys
@@ -99,6 +103,8 @@ end
 function M:_add(keys)
   local lhs = keys[1]
   local opts = M.opts(keys)
+  opts.remap = true
+  opts.expr = true
   vim.keymap.set(keys.mode, lhs, function()
     local plugins = self.active[keys.id]
 
@@ -108,8 +114,10 @@ function M:_add(keys)
 
     Util.track({ keys = lhs })
     Loader.load(plugins, { keys = lhs })
-    M.retrigger(lhs)
+    local expr = M.retrigger(lhs)
     Util.track()
+
+    return expr
   end, opts)
 end
 
