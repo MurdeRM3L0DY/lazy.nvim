@@ -37,21 +37,11 @@ end
 function M.retrigger(keys)
   local mode = vim.api.nvim_get_mode().mode
 
-  -- not sure why we have to reselect visually
-  local visual = {
-    t("v"),
-    t("V"),
-    t("<c-v>"),
-  }
-  if vim.tbl_contains(visual, mode) then
-    return "<esc>gv" .. keys
-  end
-
   if mode:find("o") then
-    return "<esc>" .. (vim.o.opfunc ~= "" and "g@" or vim.v.operator) .. keys
+    return "<Esc>" .. (vim.o.opfunc ~= "" and "g@" or vim.v.operator) .. keys
   end
 
-  return "<esc>" .. keys
+  return "<Ignore>" .. keys
 end
 
 ---@param value string|LazyKeys
